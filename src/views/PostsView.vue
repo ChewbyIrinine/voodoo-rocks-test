@@ -13,6 +13,7 @@
           class="form-control"
           id="inlineFormInputGroup"
           placeholder="Filter by author..."
+          v-model.trim="postsFilter"
         >
       </div>
     </div>
@@ -22,7 +23,6 @@
           v-for="item in posts"
           :key="item.id"
           :data="item"
-          :author="getUserName(item.userId)"
         />
       </div>
     </div>
@@ -41,26 +41,43 @@ export default {
 
   data() {
     return {
+      initialPosts: [],
       posts: [],
       users: [],
+      postsFilter: '',
     };
   },
 
-  mounted() {
-    this.getData();
-    this.getUsers();
+  watch: {
+    postsFilter(newValue) {
+      if (newValue) {
+        this.posts = this.initialPosts.filter(
+          (item) => item?.userName?.toLowerCase()?.includes(newValue.toLowerCase()),
+        );
+      } else this.posts = this.initialPosts;
+    },
+
+    initialPosts(newValue) {
+      this.posts = newValue;
+    },
+  },
+
+  async mounted() {
+    await this.getUsers().then(() => this.fetchPosts());
   },
 
   methods: {
-    async getData() {
+    async getPosts() {
       try {
         const response = await this.$http.get(
           'http://jsonplaceholder.typicode.com/posts',
         );
-        this.posts = response.data;
+        return response.data;
       } catch (error) {
-        error.log(error);
+        // eslint-disable-next-line no-console
+        console.error(error);
       }
+      return null;
     },
 
     async getUsers() {
@@ -70,12 +87,26 @@ export default {
         );
         this.users = response.data;
       } catch (error) {
-        error.log(error);
+        // eslint-disable-next-line no-console
+        console.error(error);
       }
     },
 
     getUserName(id) {
       return this.users.find((item) => item.id === id)?.name;
+    },
+
+    async fetchPosts() {
+      try {
+        this.initialPosts = await this.getPosts();
+        this.initialPosts = this.initialPosts.map((item) => ({
+          ...item,
+          userName: this.getUserName(item.userId),
+        }));
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error(error);
+      }
     },
   },
 };
