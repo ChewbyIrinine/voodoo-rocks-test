@@ -18,27 +18,65 @@
     </div>
     <div class="posts-list">
       <div class="posts-grid">
-        <div
-          v-for="index in 10"
-          :key="index"
-          class="post-item card"
-        >
-          <div class="card-body">
-            <h5 class="card-title">Sample text</h5>
-            <p class="card-text">
-              Sample text sample text sample text sample text sample text sample text sample text
-              sample text sample text
-            </p>
-            <h6 class="card-subtitle mb-2 text-muted">Author</h6>
-          </div>
-        </div>
+        <post-item
+          v-for="item in posts"
+          :key="item.id"
+          :data="item"
+          :author="getUserName(item.userId)"
+        />
       </div>
     </div>
   </div>
 </template>
 
 <script>
+import PostItem from '@/components/PostItem.vue';
+
 export default {
   name: 'PostsView',
+
+  components: {
+    PostItem,
+  },
+
+  data() {
+    return {
+      posts: [],
+      users: [],
+    };
+  },
+
+  mounted() {
+    this.getData();
+    this.getUsers();
+  },
+
+  methods: {
+    async getData() {
+      try {
+        const response = await this.$http.get(
+          'http://jsonplaceholder.typicode.com/posts',
+        );
+        this.posts = response.data;
+      } catch (error) {
+        error.log(error);
+      }
+    },
+
+    async getUsers() {
+      try {
+        const response = await this.$http.get(
+          'http://jsonplaceholder.typicode.com/users',
+        );
+        this.users = response.data;
+      } catch (error) {
+        error.log(error);
+      }
+    },
+
+    getUserName(id) {
+      return this.users.find((item) => item.id === id)?.name;
+    },
+  },
 };
 </script>
